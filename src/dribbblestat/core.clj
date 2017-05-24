@@ -2,6 +2,7 @@
   (:require [clojure.data.json :as json]))
 
 (def api-timeout 1000)
+(declare api-key)
 
 (defmacro promise-with-callback
   [callback]
@@ -10,6 +11,19 @@
       (let [promise-result# @promise-with-callback#]
         (~callback promise-result#)))
     promise-with-callback#))
+
+(defn- now
+  [& args]
+  (System/currentTimeMillis))
+
+(defn- throttled
+  [f timeout]
+  (defonce last-call (atom 0))
+  (let [interval (- (now) @last-call)]
+    (when (< interval timeout)
+      (Thread/sleep (- timeout interval)))
+    (swap! last-call now)
+    (f)))
 
 (defn- add-auth
   [url]
@@ -25,9 +39,7 @@
 
 (defn- get-with-timeout
   [url timeout]
-  (let [data (slurp url)]
-    (Thread/sleep timeout)
-    data))
+  (throttled #(slurp url) timeout))
 
 (defn- get-data
   [url]
