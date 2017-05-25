@@ -77,7 +77,9 @@
         (map (fn[[user likes]] [(user-data user) likes]))))
 
 (defn top-likers
-  [{:keys [user api-key]} callback]
+  [{:keys [user api-key on-success on-error]}]
   (defonce api-key api-key)
-  (let [promise (promise-with-callback callback)]
-    (future (deliver promise (get-top-likers user)))))
+  (let [promise (promise-with-callback on-success)]
+    (future
+      (try (deliver promise (get-top-likers user))
+        (catch Exception e (on-error e))))))
