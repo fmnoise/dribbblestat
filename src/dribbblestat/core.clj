@@ -2,6 +2,7 @@
   (:require [clojure.data.json :as json]))
 
 (def api-timeout 1000)
+(def api-root "https://api.dribbble.com/v1/")
 (declare api-key)
 
 (defn- now
@@ -23,7 +24,7 @@
 
 (defn- make-url
   [endpoint]
-  (add-auth (str "https://api.dribbble.com/v1/" endpoint)))
+  (add-auth (str api-root endpoint)))
 
 (defn- user
   [id]
