@@ -4,14 +4,6 @@
 (def api-timeout 1000)
 (declare api-key)
 
-(defmacro promise-with-callback
-  [callback]
-  `(let [promise-with-callback# (promise)]
-    (future
-      (let [promise-result# @promise-with-callback#]
-        (~callback promise-result#)))
-    promise-with-callback#))
-
 (defn- now
   [& args]
   (System/currentTimeMillis))
@@ -79,7 +71,6 @@
 (defn top-likers
   [{:keys [user api-key on-success on-error]}]
   (defonce api-key api-key)
-  (let [promise (promise-with-callback on-success)]
-    (future
-      (try (deliver promise (get-top-likers user))
-        (catch Exception e (on-error e))))))
+  (future
+    (try (on-success (get-top-likers user))
+      (catch Exception e (on-error e)))))
