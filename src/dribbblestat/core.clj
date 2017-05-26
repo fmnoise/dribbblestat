@@ -54,7 +54,7 @@
 (defn- likers
   [shot]
   (let [url (get shot "likes_url")]
-    (map #(get-in % ["user" "id"]) (get-data (add-auth url)))))
+    (map #(get % "user") (get-data (add-auth url)))))
 
 (defn- get-top-likers
   [user]
@@ -66,8 +66,7 @@
         frequencies
         (sort-by last)
         reverse
-        (take 10)
-        (map (fn[[user likes]] [(user-data user) likes]))))
+        (take 10)))
 
 (defn top-likers
   [{:keys [user api-key on-success on-error]}]
