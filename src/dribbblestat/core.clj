@@ -3,6 +3,7 @@
 
 (def api-timeout 1000)
 (def api-root "https://api.dribbble.com/v1/")
+(def per-page 100)
 (declare api-key)
 
 (defn- now
@@ -17,6 +18,10 @@
       (Thread/sleep (- timeout interval)))
     (swap! last-call now)
     (f)))
+
+(defn- add-pagination
+  [url page]
+  (str url "&page=" page "&per_page=" per-page))
 
 (defn- add-auth
   [url]
@@ -38,23 +43,32 @@
   [url]
   (json/read-str (get-with-timeout url api-timeout)))
 
+(defn- get-collection
+  [url]
+  (loop [page 1
+         collection []]
+    (let [page-contents (get-data (add-pagination url page))]
+      (if (empty? page-contents)
+        collection
+        (recur (inc page) (into collection page-contents))))))
+
 (defn- user-data
   [user-id]
   (get-data (user user-id)))
 
 (defn- followers
   [user]
-  ((comp get-data add-auth) (get user "followers_url")))
+  ((comp get-collection add-auth) (get user "followers_url")))
 
 (defn- shots
   [follower]
   (let [url (get-in follower ["follower" "shots_url"])]
-    (get-data (add-auth url))))
+    (get-collection (add-auth url))))
 
 (defn- likers
   [shot]
   (let [url (get shot "likes_url")]
-    (map #(get % "user") (get-data (add-auth url)))))
+    (map #(get % "user") (get-collection (add-auth url)))))
 
 (defn- get-top-likers
   [user]
