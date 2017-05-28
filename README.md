@@ -10,7 +10,7 @@ A Clojure library for getting top 10 likers for given user followers' shots from
 (d/top-likers :user 1
               :api-key "dribbble-api-key"
               :on-success println
-              :on-error println})
+              :on-error println)
 
 ;; [[{,,,user data map} ,,,likes count] ,,, ]
 ```
