@@ -2,7 +2,7 @@
   (:require [clojure.data.json :as json]))
 
 (def api-timeout 1000)
-(def api-root "https://api.dribbble.com/v1/")
+(def api-root "https://api.dribbble.com/v1")
 (def per-page 100)
 (declare api-key)
 
@@ -83,8 +83,8 @@
         (take 10)))
 
 (defn top-likers
-  [{:keys [user api-key on-success on-error]}]
-  (defonce api-key api-key)
+  [& {:keys [user api-key on-success on-error]}]
+  (def api-key api-key)
   (future
     (try (on-success (get-top-likers user))
       (catch Exception e (on-error e)))))
