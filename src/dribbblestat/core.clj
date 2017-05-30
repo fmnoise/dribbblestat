@@ -76,8 +76,7 @@
         (mapcat #(shots %))
         (mapcat #(likers %))
         frequencies
-        (sort-by last)
-        reverse
+        (sort-by last >)
         (take 10)))
 
 (defn top-likers
