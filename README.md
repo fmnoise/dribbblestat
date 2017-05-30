@@ -1,6 +1,4 @@
-# dribbblestat
-
-[![Build Status](https://travis-ci.org/fmnoise/dribbblestat.svg?branch=master)](https://travis-ci.org/fmnoise/dribbblestat)
+# dribbblestat [![Build Status](https://travis-ci.org/fmnoise/dribbblestat.svg?branch=master)](https://travis-ci.org/fmnoise/dribbblestat)
 
 A Clojure library for getting top 10 likers for given user followers' shots from dribbble
 
