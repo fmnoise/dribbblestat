@@ -5,7 +5,8 @@
 (def api-timeout 1000)
 (def api-root "https://api.dribbble.com/v1")
 (def per-page 100)
-(declare api-key)
+(def ^:dynamic api-key nil)
+(def last-call (atom 0))
 
 (defn- now
   [& args]
@@ -13,7 +14,6 @@
 
 (defn- throttled
   [f timeout]
-  (defonce last-call (atom 0))
   (let [interval (- (now) @last-call)]
     (when (< interval timeout)
       (Thread/sleep (- timeout interval)))
@@ -73,15 +73,15 @@
   (->>  user
         user-data
         followers
-        (mapcat #(shots %))
-        (mapcat #(likers %))
+        (mapcat shots)
+        (mapcat likers)
         frequencies
         (sort-by last >)
         (take 10)))
 
 (defn top-likers
   [& {:keys [user api-key on-success on-error]}]
-  (def api-key api-key)
   (future
-    (try (on-success (get-top-likers user))
-      (catch Exception e (on-error e)))))
+    (with-bindings {#'api-key api-key}
+      (try (on-success (get-top-likers user))
+          (catch Exception e (on-error e))))))
