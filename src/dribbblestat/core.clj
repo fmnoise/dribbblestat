@@ -25,56 +25,56 @@
   [endpoint]
   (str api-root endpoint))
 
-(defn- user
+(defn- user-url
   [id]
   (make-url (str "/users/" id)))
 
-(defn- get-with-timeout
+(defn- fetch-with-timeout
   [url page timeout]
   (throttled
     #(client/get url {:oauth-token api-key :query-params {"page" page "per_page" per-page}})
     timeout))
 
-(defn- get-data
+(defn- fetch-data
   ([url]
-   (get-data url 1))
+   (fetch-data url 1))
   ([url page]
-   (json/read-str (:body (get-with-timeout url page api-timeout)))))
+   (json/read-str (:body (fetch-with-timeout url page api-timeout)))))
 
-(defn- get-collection
+(defn- fetch-collection
   [url]
   (loop [page 1
          collection []]
-    (let [page-contents (get-data url page)]
+    (let [page-contents (fetch-data url page)]
       (if (empty? page-contents)
         collection
         (recur (inc page) (into collection page-contents))))))
 
-(defn- user-data
+(defn- fetch-user
   [user-id]
-  (get-data (user user-id)))
+  (fetch-data (user-url user-id)))
 
-(defn- followers
+(defn- fetch-followers
   [user]
-  (get-collection (get user "followers_url")))
+  (fetch-collection (get user "followers_url")))
 
-(defn- shots
+(defn- fetch-shots
   [follower]
   (let [url (get-in follower ["follower" "shots_url"])]
-    (get-collection url)))
+    (fetch-collection url)))
 
-(defn- likers
+(defn- fetch-likers
   [shot]
   (let [url (get shot "likes_url")]
-    (map #(get % "user") (get-collection url))))
+    (map #(get % "user") (fetch-collection url))))
 
-(defn- get-top-likers
+(defn- fetch-top-likers
   [user]
   (->>  user
-        user-data
-        followers
-        (mapcat shots)
-        (mapcat likers)
+        fetch-user
+        fetch-followers
+        (mapcat fetch-shots)
+        (mapcat fetch-likers)
         frequencies
         (sort-by last >)
         (take 10)))
@@ -83,5 +83,5 @@
   [& {:keys [user api-key on-success on-error]}]
   (future
     (with-bindings {#'api-key api-key}
-      (try (on-success (get-top-likers user))
+      (try (on-success (fetch-top-likers user))
           (catch Exception e (on-error e))))))
