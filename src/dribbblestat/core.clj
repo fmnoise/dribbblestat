@@ -1,12 +1,12 @@
 (ns dribbblestat.core
-  (:require [clojure.data.json :as json]
-            [clj-http.client :as client]))
+  (:require [clj-http.client :as client]))
 
 (def api-timeout 1000)
 (def api-root "https://api.dribbble.com/v1")
 (def per-page 100)
 (def ^:dynamic api-key nil)
 (def last-call (atom 0))
+(def connection-timeout 5000)
 
 (defn- now
   [& args]
@@ -32,14 +32,18 @@
 (defn- fetch-with-timeout
   [url page timeout]
   (throttled
-    #(client/get url {:oauth-token api-key :query-params {"page" page "per_page" per-page}})
+    #(client/get url
+      {:oauth-token api-key
+       :query-params {"page" page "per_page" per-page}
+       :connection-timeout connection-timeout
+       :as :json})
     timeout))
 
 (defn- fetch-data
   ([url]
    (fetch-data url 1))
   ([url page]
-   (json/read-str (:body (fetch-with-timeout url page api-timeout)))))
+   (:body (fetch-with-timeout url page api-timeout))))
 
 (defn- fetch-collection
   [url]
@@ -56,17 +60,17 @@
 
 (defn- fetch-followers
   [user]
-  (fetch-collection (get user "followers_url")))
+  (fetch-collection (get user :followers_url)))
 
 (defn- fetch-shots
   [follower]
-  (let [url (get-in follower ["follower" "shots_url"])]
+  (let [url (get-in follower [:follower :shots_url])]
     (fetch-collection url)))
 
 (defn- fetch-likers
   [shot]
-  (let [url (get shot "likes_url")]
-    (map #(get % "user") (fetch-collection url))))
+  (let [url (get shot :likes_url)]
+    (map #(get % :user) (fetch-collection url))))
 
 (defn- fetch-top-likers
   [user]
